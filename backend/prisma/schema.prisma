@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+enum ProjectStatus {
+  OPEN
+  ASSIGNED
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  COMPLETED
+  CANCELLED
+}
+
+enum EscrowStatus {
+  CREATED
+  FUNDED
+  LOCKED
+  PARTIALLY_RELEASED
+  RELEASED
+  DISPUTED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  DEPOSIT
+  LOCK
+  RELEASE
+  REFUND
+  PENALTY
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model User {
+  id                String    @id @default(cuid())
+  walletAddress     String    @unique
+  username          String    @unique
+  email             String?   @unique
+  role              UserRole
+  profileImage      String?
+  bio               String?
+  verified          Boolean   @default(false)
+  verificationToken String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  clientProjects       Project[]       @relation("ClientProjects")
+  freelancerProjects   Project[]       @relation("FreelancerProjects")
+  submissions          Submission[]
+  transactions         Transaction[]
+
+  @@index([walletAddress])
+  @@index([email])
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  title         String
+  description   String        @db.Text
+  budget        Decimal       @db.Decimal(18, 8)
+  deadline      DateTime
+  status        ProjectStatus @default(OPEN)
+  
+  clientId      String
+  client        User          @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
+  
+  freelancerId  String?
+  freelancer    User?         @relation("FreelancerProjects", fields: [freelancerId], references: [id], onDelete: SetNull)
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  escrow        Escrow?
+  submissions   Submission[]
+  transactions  Transaction[]
+
+  @@index([clientId])
+  @@index([freelancerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Escrow {
+  id                String        @id @default(cuid())
+  projectId         String        @unique
+  project           Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  amount            Decimal       @db.Decimal(18, 8)
+  escrowAddress     String?
+  transactionHash   String?
+  status            EscrowStatus  @default(CREATED)
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Submission {
+  id            String            @id @default(cuid())
+  projectId     String
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  freelancerId  String
+  freelancer    User              @relation(fields: [freelancerId], references: [id], onDelete: Cascade)
+  
+  status        SubmissionStatus  @default(DRAFT)
+  description   String            @db.Text
+  githubUrl     String?
+  fileUrl       String?
+  
+  aiScore       Int?
+  aiReport      String?           @db.Text
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([projectId])
+  @@index([freelancerId])
+  @@index([status])
+}
+
+model Transaction {
+  id            String              @id @default(cuid())
+  projectId     String
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  txHash        String              @unique
+  type          TransactionType
+  amount        Decimal             @db.Decimal(18, 8)
+  status        TransactionStatus   @default(PENDING)
+  
+  blockNumber   Int?
+  timestamp     DateTime?
+  
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([projectId])
+  @@index([txHash])
+  @@index([status])
+  @@index([createdAt])
+}
