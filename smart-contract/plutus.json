@@ -1,0 +1,94 @@
+{
+  "preamble": {
+    "title": "chedu/smart-contract",
+    "description": "Aiken contracts for project 'chedu/smart-contract'",
+    "version": "0.0.0",
+    "plutusVersion": "v3",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.1.23+8949565"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "escrow.escrow.spend",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/escrow~1EscrowDatum"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/escrow~1EscrowRedeemer"
+        }
+      },
+      "compiledCode": "59012a01010029800aba2aba1aab9faab9eaab9dab9a48888896600264653001300700198039804000cc01c0092225980099b8748008c01cdd500144c8cc8a60022b30013001300a375400519800980698059baa0029180718079807980798079807980798079807800c88c8cc00400400c896600200314a115980099b8f375c602200200714a313300200230120014034808122259800980218069baa0098998009bac3002300e375400e6eb8c040c038dd5001c4cc004dd6180118071baa007375c60206022601c6ea800d00c22c804a60146ea801a601a0069112cc004c01000a2b3001300e37540130038b201e8acc004cdc3a400400515980098071baa009801c5900f45900c2018180598060009b8748000c020dd50014590060c01c004c00cdd5003c52689b2b200201",
+      "hash": "374d7a77d7d5c79828f685293a0c2f04d833d6725ba63338c576766e"
+    },
+    {
+      "title": "escrow.escrow.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "compiledCode": "59012a01010029800aba2aba1aab9faab9eaab9dab9a48888896600264653001300700198039804000cc01c0092225980099b8748008c01cdd500144c8cc8a60022b30013001300a375400519800980698059baa0029180718079807980798079807980798079807800c88c8cc00400400c896600200314a115980099b8f375c602200200714a313300200230120014034808122259800980218069baa0098998009bac3002300e375400e6eb8c040c038dd5001c4cc004dd6180118071baa007375c60206022601c6ea800d00c22c804a60146ea801a601a0069112cc004c01000a2b3001300e37540130038b201e8acc004cdc3a400400515980098071baa009801c5900f45900c2018180598060009b8748000c020dd50014590060c01c004c00cdd5003c52689b2b200201",
+      "hash": "374d7a77d7d5c79828f685293a0c2f04d833d6725ba63338c576766e"
+    }
+  ],
+  "definitions": {
+    "Int": {
+      "dataType": "integer"
+    },
+    "aiken/crypto/VerificationKeyHash": {
+      "title": "VerificationKeyHash",
+      "dataType": "bytes"
+    },
+    "escrow/EscrowDatum": {
+      "title": "EscrowDatum",
+      "anyOf": [
+        {
+          "title": "EscrowDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "client",
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            },
+            {
+              "title": "freelancer",
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            },
+            {
+              "title": "amount",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "deadline",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "escrow/EscrowRedeemer": {
+      "title": "EscrowRedeemer",
+      "anyOf": [
+        {
+          "title": "Release",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "Refund",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    }
+  }
+}

@@ -70,7 +70,6 @@ model User {
   clientProjects       Project[]       @relation("ClientProjects")
   freelancerProjects   Project[]       @relation("FreelancerProjects")
   submissions          Submission[]
-  transactions         Transaction[]
 
   @@index([walletAddress])
   @@index([email])
@@ -113,6 +112,11 @@ model Escrow {
   transactionHash   String?
   status            EscrowStatus  @default(CREATED)
   
+  walletAddress     String?
+  blockchainStatus  String?
+  fundedAt          DateTime?
+  releasedAt        DateTime?
+  
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -135,6 +139,8 @@ model Submission {
   
   aiScore       Int?
   aiReport      String?           @db.Text
+  aiAnalyzedAt  DateTime?
+  aiStatus      String?
   
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -156,6 +162,11 @@ model Transaction {
   
   blockNumber   Int?
   timestamp     DateTime?
+  
+  walletFrom    String?
+  walletTo      String?
+  blockchainNetwork String?
+  confirmedAt   DateTime?
   
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt

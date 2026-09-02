@@ -9,6 +9,10 @@ import projectsRouter from "./routes/projects.js";
 import escrowRouter from "./routes/escrow.js";
 import submissionsRouter from "./routes/submissions.js";
 import transactionsRouter from "./routes/transactions.js";
+import aiRouter from "./routes/ai.routes.js";
+import cardanoRouter from "./routes/cardano.routes.js";
+import authRouter from "./routes/auth.routes.js";
+import { startBlockchainListener } from "./workers/blockchainListener.js";
 
 const app = express();
 
@@ -23,11 +27,14 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter);
 
+app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/escrow", escrowRouter);
 app.use("/api/submissions", submissionsRouter);
 app.use("/api/transactions", transactionsRouter);
+app.use("/api/ai", aiRouter);
+app.use("/api/cardano", cardanoRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -38,6 +45,7 @@ app.use(errorHandler);
 const server = app.listen(config.port, () => {
   console.log(`🚀 Server running on port ${config.port}`);
   console.log(`Environment: ${config.nodeEnv}`);
+  startBlockchainListener();
 });
 
 export default server;

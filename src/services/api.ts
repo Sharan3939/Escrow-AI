@@ -17,8 +17,9 @@ class APIClient {
     });
 
     this.client.interceptors.request.use((config) => {
-      if (this.token) {
-        config.headers.Authorization = `Bearer ${this.token}`;
+      const token = this.getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
@@ -32,12 +33,25 @@ class APIClient {
     );
   }
 
+  private getToken(): string | null {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("escrow_ai_token");
+    }
+    return this.token;
+  }
+
   setToken(token: string) {
     this.token = token;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("escrow_ai_token", token);
+    }
   }
 
   clearToken() {
     this.token = null;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("escrow_ai_token");
+    }
   }
 
   get<T = Record<string, unknown>>(url: string) {

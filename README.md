@@ -176,11 +176,26 @@ npm run prisma:push      # Sync database schema
    - Payment milestones
    - Freelancer portfolios
 
+## Phase 4: Cardano Integration Setup
+
+To test the Cardano Wallet integration on the Preview Testnet:
+
+1. **Wallet Setup**: Install a Cardano wallet browser extension (e.g., Nami, Eternl, or Lace).
+2. **Network Config**: Ensure your wallet is set to the **Preview Testnet** network.
+3. **Fund Wallet**: Use the official Cardano Testnet Faucet to receive tADA.
+4. **Blockfrost Config**: Create an account on Blockfrost, generate a Preview project ID, and add it to `backend/.env` as `BLOCKFROST_PROJECT_ID`.
+
+### Transaction Flow
+- **Connect Wallet**: Handled via Mesh SDK's `@meshsdk/react`.
+- **Sign Tx**: Users sign locking and release transactions directly in the browser (private keys never touch the backend).
+- **Backend Verification**: The backend securely validates the transaction hash with Blockfrost.
+
 ## Project Status
 
 ✅ Phase 1: Frontend architecture and UI system  
 ✅ Phase 2: Backend API, database, and service layer  
-🔄 Phase 3: Gemini AI and Cardano integration  
+✅ Phase 3: Gemini AI Integration  
+✅ Phase 4: Cardano Wallet Integration (Preview Testnet)
 
 ## Tech Stack Summary
 

@@ -14,6 +14,22 @@ export async function createProject(
       deadline: new Date(data.deadline),
       clientId,
       status: "OPEN",
+      escrow: {
+        create: {
+          amount: parseFloat(data.budget),
+          status: "CREATED",
+        },
+      },
+    },
+    include: {
+      escrow: true,
+      client: {
+        select: {
+          id: true,
+          username: true,
+          walletAddress: true,
+        },
+      },
     },
   });
 }
@@ -53,8 +69,17 @@ export async function getProjectById(id: string) {
         select: { id: true, username: true, walletAddress: true },
       },
       escrow: true,
-      submissions: true,
-      transactions: true,
+      submissions: {
+        include: {
+          freelancer: {
+            select: { id: true, username: true, walletAddress: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      transactions: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 

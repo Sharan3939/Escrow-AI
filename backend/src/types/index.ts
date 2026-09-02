@@ -4,7 +4,8 @@ export interface JWTPayload {
   role: "CLIENT" | "FREELANCER" | "ADMIN";
 }
 
-export interface APIResponse<T = Record<string, unknown>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface APIResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;

@@ -1,3 +1,5 @@
+"use client";
+
 import { Briefcase, Gem, Wallet } from "lucide-react";
 import { PageShell } from "@/src/components/layout/PageShell";
 import { EscrowCard } from "@/src/components/ui/EscrowCard";
@@ -5,10 +7,17 @@ import { Card } from "@/src/components/ui/Card";
 import { StatsCard } from "@/src/components/dashboard/StatsCard";
 import { TransactionCard } from "@/src/components/dashboard/TransactionCard";
 import { AIReportCard } from "@/src/components/dashboard/AIReportCard";
-import { activeEscrows, aiReports, transactions } from "@/src/constants/mockData";
+import { useDashboardData } from "@/src/hooks/useDashboardData";
+import { ProtectedRoute } from "@/src/components/layout/ProtectedRoute";
 
 export default function DashboardPage() {
+  const { data: { escrows, transactions, aiReports }, loading, error } = useDashboardData();
+
+  if (loading) return <div className="p-8 text-white">Loading dashboard...</div>;
+  if (error) return <div className="p-8 text-red-500">{error}</div>;
+
   return (
+    <ProtectedRoute>
     <PageShell
       title="Operations dashboard"
       subtitle="Track wallet health, active escrows, and AI verification progress from one premium control center."
@@ -28,9 +37,9 @@ export default function DashboardPage() {
               <span className="text-sm text-cyan-300">2 in motion</span>
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
-              {activeEscrows.map((item) => (
+              {escrows.length > 0 ? escrows.map((item: any) => (
                 <EscrowCard key={item.id} item={item} />
-              ))}
+              )) : <div className="text-slate-400">No active escrows</div>}
             </div>
           </Card>
         </div>
@@ -42,9 +51,9 @@ export default function DashboardPage() {
               <span className="text-sm text-slate-400">Updated live</span>
             </div>
             <div className="space-y-3">
-              {transactions.map((transaction) => (
+              {transactions.length > 0 ? transactions.map((transaction: any) => (
                 <TransactionCard key={transaction.id} item={transaction} />
-              ))}
+              )) : <div className="text-slate-400">No recent transactions</div>}
             </div>
           </Card>
 
@@ -54,13 +63,14 @@ export default function DashboardPage() {
               <span className="text-sm text-cyan-300">Auto review enabled</span>
             </div>
             <div className="space-y-3">
-              {aiReports.map((report) => (
+              {aiReports.length > 0 ? aiReports.map((report: any) => (
                 <AIReportCard key={report.id} item={report} />
-              ))}
+              )) : <div className="text-slate-400">No AI reports</div>}
             </div>
           </Card>
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

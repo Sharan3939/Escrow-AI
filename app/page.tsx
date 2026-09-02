@@ -4,7 +4,24 @@ import { Footer } from "@/src/components/layout/Footer";
 import { FeatureCard } from "@/src/components/ui/FeatureCard";
 import { Hero } from "@/src/components/ui/Hero";
 import { Card } from "@/src/components/ui/Card";
-import { landingFeatures, roadmap, steps } from "@/src/constants/mockData";
+const landingFeatures = [
+  { title: "Smart Contracts", description: "Automated logic powered by Aiken." },
+  { title: "Non-Custodial", description: "Your keys, your crypto." },
+  { title: "AI Verification", description: "LLMs review your work before release." },
+];
+
+const steps = [
+  "Client locks ADA into an escrow contract.",
+  "Freelancer completes and submits the work.",
+  "AI validates the submission against requirements.",
+  "Funds are instantly and deterministically released.",
+];
+
+const roadmap = [
+  "Q3: Aiken smart contract deployment",
+  "Q4: AI model fine-tuning for code review",
+  "Q1: Mainnet launch",
+];
 
 export default function Home() {
   return (
