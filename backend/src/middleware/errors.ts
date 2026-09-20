@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
 import type { APIResponse } from "../types/index.js";
 
 export class APIError extends Error {
@@ -12,12 +13,22 @@ export class APIError extends Error {
 }
 
 export function errorHandler(
-  err: Error | APIError,
+  err: Error | APIError | ZodError,
   _req: Request,
   res: Response,
   _next: NextFunction
 ): void {
   console.error("[Error]", err);
+
+  if (err instanceof ZodError) {
+    const errorMsg = err.issues.map((i) => i.message).join(", ");
+    res.status(400).json({
+      success: false,
+      error: errorMsg || "Validation error",
+      timestamp: new Date().toISOString(),
+    } satisfies APIResponse);
+    return;
+  }
 
   if (err instanceof APIError) {
     res.status(err.status).json({
@@ -28,7 +39,7 @@ export function errorHandler(
     return;
   }
 
-  if (err.message.includes("Unique constraint failed")) {
+  if (err.message && err.message.includes("Unique constraint failed")) {
     res.status(409).json({
       success: false,
       error: "Resource already exists",
@@ -39,7 +50,7 @@ export function errorHandler(
 
   res.status(500).json({
     success: false,
-    error: "Internal server error",
+    error: err.message || "Internal server error",
     timestamp: new Date().toISOString(),
   } satisfies APIResponse);
 }

@@ -25,8 +25,24 @@ export function Button({
     ghost: "text-slate-300 hover:bg-white/10 hover:text-white",
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const content = (
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={cn(base, variants[variant], className)}
+      >
+        <motion.span
+          className="inline-flex items-center justify-center gap-2"
+          whileHover={{ scale: 1.02, y: -1 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {children}
+        </motion.span>
+      </Link>
+    );
+  }
+
+  return (
     <motion.button
       whileHover={{ scale: 1.02, y: -1 }}
       whileTap={{ scale: 0.98 }}
@@ -36,10 +52,4 @@ export function Button({
       {children}
     </motion.button>
   );
-
-  if (href) {
-    return <Link href={href}>{content}</Link>;
-  }
-
-  return content;
 }

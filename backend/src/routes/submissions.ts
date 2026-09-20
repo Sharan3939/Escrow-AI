@@ -9,6 +9,13 @@ router.post(
   authMiddleware,
   asyncHandler(submissionController.createSubmission)
 );
+
 router.get("/:projectId", asyncHandler(submissionController.getSubmission));
+
+router.post(
+  "/:id/review",
+  authMiddleware,
+  asyncHandler(submissionController.reviewSubmission)
+);
 
 export default router;

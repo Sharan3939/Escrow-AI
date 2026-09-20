@@ -12,6 +12,8 @@ import transactionsRouter from "./routes/transactions.js";
 import aiRouter from "./routes/ai.routes.js";
 import cardanoRouter from "./routes/cardano.routes.js";
 import authRouter from "./routes/auth.routes.js";
+import milestonesRouter from "./routes/milestones.js";
+import reputationRouter from "./routes/reputation.js";
 import { startBlockchainListener } from "./workers/blockchainListener.js";
 
 const app = express();
@@ -30,6 +32,8 @@ app.use("/api/", limiter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/projects", projectsRouter);
+app.use("/api/milestones", milestonesRouter);
+app.use("/api/reputation", reputationRouter);
 app.use("/api/escrow", escrowRouter);
 app.use("/api/submissions", submissionsRouter);
 app.use("/api/transactions", transactionsRouter);

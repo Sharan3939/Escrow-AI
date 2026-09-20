@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../config/database.js";
 import { geminiService } from "../services/gemini.service.js";
+import { updateSubmissionAIReport } from "../services/submission.service.js";
 import { APIError } from "../middleware/errors.js";
 import type { APIResponse } from "../types/index.js";
 
@@ -26,7 +27,6 @@ export async function analyze(req: Request, res: Response) {
 
   // Authorization: Only client or authorized participant
   const isClient = project.clientId === req.userId;
-  // If we also want to allow the freelancer to trigger it:
   const isFreelancer = submission.freelancerId === req.userId;
 
   if (!isClient && !isFreelancer) {
@@ -44,31 +44,26 @@ export async function analyze(req: Request, res: Response) {
       {
         title: project.title,
         description: project.description,
-        requirements: undefined, // Add requirements if available in Project schema
       },
       {
         description: submission.description,
         githubUrl: submission.githubUrl,
         fileUrl: submission.fileUrl,
+        revisionCount: submission.revisionCount,
       }
     );
 
-    // Update submission with AI report
-    await prisma.submission.update({
-      where: { id: submissionId },
-      data: {
-        aiScore: report.qualityScore,
-        aiReport: JSON.stringify(report),
-        aiAnalyzedAt: new Date(),
-        aiStatus: "COMPLETED",
-      },
-    });
+    // Update submission with structured AI report and status
+    const updated = await updateSubmissionAIReport(submissionId, report);
 
-    console.log(`[AI Analysis Success] Submission ID: ${submissionId} at ${new Date().toISOString()}`);
+    console.log(`[AI Analysis Success] Submission ID: ${submissionId} - Status: ${report.status} at ${new Date().toISOString()}`);
 
     res.json({
       success: true,
-      data: report,
+      data: {
+        ...report,
+        submission: updated,
+      },
       timestamp: new Date().toISOString(),
     } satisfies APIResponse);
   } catch (error) {
@@ -76,9 +71,15 @@ export async function analyze(req: Request, res: Response) {
     
     await prisma.submission.update({
       where: { id: submissionId },
-      data: { aiStatus: "FAILED" },
+      data: {
+        aiStatus: "FAILED",
+        aiVerificationStatus: "FAIL",
+      },
     });
 
+    if (error instanceof APIError) {
+      throw error;
+    }
     throw new APIError(500, "Failed to analyze submission with AI");
   }
 }

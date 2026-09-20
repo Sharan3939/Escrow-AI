@@ -2,8 +2,19 @@ import prisma from "../config/database.js";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
 import { config } from "../config/index.js";
 
-const projectId = config.cardano?.blockfrostProjectId || process.env.BLOCKFROST_PROJECT_ID || process.env.BLOCKFROST_API_KEY || "";
-const isPlaceholderKey = !projectId || projectId.includes("placeholder") || projectId.includes("your-");
+const projectId =
+  config.cardano?.blockfrostProjectId ||
+  process.env.BLOCKFROST_PROJECT_ID ||
+  process.env.BLOCKFROST_API_KEY ||
+  "";
+
+const isPlaceholderKey =
+  !projectId ||
+  projectId.includes("placeholder") ||
+  projectId.includes("your-") ||
+  projectId.includes("your_");
+
+
 
 let blockfrost: BlockFrostAPI | null = null;
 if (!isPlaceholderKey) {

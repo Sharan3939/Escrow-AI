@@ -10,7 +10,9 @@ validateNetwork(config.cardano.network);
 const isPlaceholder =
   !config.cardano.blockfrostProjectId ||
   config.cardano.blockfrostProjectId.includes("placeholder") ||
-  config.cardano.blockfrostProjectId.includes("your-");
+  config.cardano.blockfrostProjectId.includes("your-") ||
+  config.cardano.blockfrostProjectId.includes("your_");
+
 
 let blockfrost: BlockFrostAPI | null = null;
 if (!isPlaceholder) {
@@ -91,11 +93,52 @@ export class CardanoService {
     txHash: string | null,
     status: string
   ): Promise<any> {
+    const existing = await prisma.escrow.findFirst({
+      where: {
+        OR: [{ id: escrowId }, { projectId: escrowId }],
+      },
+      include: {
+        project: {
+          include: {
+            submissions: {
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+            freelancer: true,
+          },
+        },
+      },
+    });
+
+    if (!existing) {
+      throw new Error(`Escrow record not found for id/projectId: ${escrowId}`);
+    }
+
+    if (status === "RELEASED") {
+      if (!txHash) {
+        throw new Error("Cannot mark escrow as RELEASED without a valid transaction hash.");
+      }
+      const submission = existing.project?.submissions[0];
+      if (!submission || submission.aiVerificationStatus !== "PASS" || submission.clientReviewStatus !== "APPROVED") {
+        throw new Error("Cannot mark escrow as RELEASED: Gemini AI and Client Satisfaction dual approvals are required.");
+      }
+    }
+
+    const escrowStatus =
+      status === "LOCKED"
+        ? "LOCKED"
+        : status === "RELEASED"
+        ? "RELEASED"
+        : undefined;
+
     return prisma.escrow.update({
-      where: { id: escrowId },
+      where: { id: existing.id },
       data: {
         transactionHash: txHash || undefined,
         blockchainStatus: status,
+        status: escrowStatus,
+        fundedAt: status === "LOCKED" ? new Date() : undefined,
+        releasedAt: status === "RELEASED" ? new Date() : undefined,
       },
     });
   }

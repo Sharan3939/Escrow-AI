@@ -25,7 +25,12 @@ export const config = {
   port: parseInt(process.env.PORT || "3001", 10),
   nodeEnv: process.env.NODE_ENV || "development",
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
+      : process.env.FRONTEND_URL
+      ? [process.env.FRONTEND_URL, "http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]
+      : ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
     credentials: true,
   },
 };
+

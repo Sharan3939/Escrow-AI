@@ -1,13 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/src/components/ui/Button";
-
-const navItems = [
-  { label: "Product", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Dashboard", href: "/dashboard" },
-];
+import { WalletButton } from "@/src/components/wallet/WalletButton";
+import { useAuthStore } from "@/src/store/useAuthStore";
 
 export function Navbar() {
+  const { user, isAuthenticated } = useAuthStore();
+  const isFreelancer = user?.role === "FREELANCER";
+
   return (
     <nav className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
@@ -19,20 +20,40 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="text-sm text-slate-300 transition hover:text-white">
-              {item.label}
-            </Link>
-          ))}
+          <Link href="/#features" className="text-sm text-slate-300 transition hover:text-white">
+            Product
+          </Link>
+          <Link href="/#how-it-works" className="text-sm text-slate-300 transition hover:text-white">
+            How it works
+          </Link>
+          <Link href="/dashboard" className="text-sm text-slate-300 transition hover:text-white">
+            Dashboard
+          </Link>
+          {isAuthenticated && (
+            isFreelancer ? (
+              <Link href="/freelancer/projects" className="text-sm text-emerald-400 font-semibold transition hover:text-emerald-300">
+                Freelancer Board
+              </Link>
+            ) : (
+              <Link href="/client/projects" className="text-sm text-cyan-400 font-semibold transition hover:text-cyan-300">
+                Client Workspace
+              </Link>
+            )
+          )}
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="secondary" className="hidden sm:inline-flex">
-            <Link href="/dashboard">Launch app</Link>
+          <Button
+            href={isAuthenticated ? (isFreelancer ? "/freelancer/projects" : "/client/projects") : "/dashboard"}
+            variant="secondary"
+            className="hidden sm:inline-flex"
+          >
+            Launch app
           </Button>
-          <Button>Connect wallet</Button>
+          <WalletButton />
         </div>
       </div>
     </nav>
   );
 }
+

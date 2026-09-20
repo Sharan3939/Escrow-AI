@@ -2,6 +2,13 @@ import { useState, useEffect } from "react";
 import { apiClient } from "../services/api";
 import { useAuthStore } from "../store/useAuthStore";
 
+export interface DashboardStats {
+  adaLocked: string;
+  openEscrows: number;
+  aiScore: string;
+  inMotionCount: number;
+}
+
 export function useDashboardData() {
   const { isAuthenticated } = useAuthStore();
   const [data, setData] = useState<{
@@ -12,6 +19,12 @@ export function useDashboardData() {
     escrows: [],
     transactions: [],
     aiReports: [],
+  });
+  const [stats, setStats] = useState<DashboardStats>({
+    adaLocked: "0 ADA",
+    openEscrows: 0,
+    aiScore: "N/A",
+    inMotionCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +37,23 @@ export function useDashboardData() {
         const res = await apiClient.get<any>("/projects");
         const projects = res.data || [];
 
+        let totalAdaLocked = 0;
+        let inMotion = 0;
+        const allScores: number[] = [];
+
         const escrows = projects
           .filter((p: any) => p.escrow)
           .map((p: any) => {
             const status = (p.escrow.status || "CREATED").toUpperCase();
+            const budgetNum = Number(p.budget) || 0;
+
+            if (status === "LOCKED") {
+              totalAdaLocked += budgetNum;
+              inMotion++;
+            } else if (status === "CREATED" || status === "PARTIALLY_RELEASED") {
+              inMotion++;
+            }
+
             return {
               ...p.escrow,
               projectId: p.id,
@@ -65,10 +91,13 @@ export function useDashboardData() {
               if (sub.aiReport) {
                 try {
                   const parsed = JSON.parse(sub.aiReport);
+                  const score = parsed.qualityScore || sub.aiScore || 0;
+                  if (score > 0) allScores.push(score);
+
                   aiReports.push({
                     id: sub.id,
                     title: p.title,
-                    score: parsed.qualityScore || sub.aiScore || 85,
+                    score,
                     summary:
                       parsed.projectSummary ||
                       "Automated verification evaluated against requirements.",
@@ -79,11 +108,24 @@ export function useDashboardData() {
           }
         }
 
+        const avgScore =
+          allScores.length > 0
+            ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
+            : null;
+
         setData({
           escrows: escrows.slice(0, 6),
           transactions: transactions.slice(0, 6),
           aiReports: aiReports.slice(0, 6),
         });
+
+        setStats({
+          adaLocked: `${totalAdaLocked.toLocaleString()} ADA`,
+          openEscrows: projects.filter((p: any) => p.status !== "COMPLETED" && p.status !== "CANCELLED").length,
+          aiScore: avgScore !== null ? `${avgScore}/100` : "N/A",
+          inMotionCount: inMotion,
+        });
+
         setError(null);
       } catch (err: any) {
         console.error("Dashboard fetch error:", err);
@@ -95,5 +137,6 @@ export function useDashboardData() {
     fetchData();
   }, [isAuthenticated]);
 
-  return { data, loading, error };
+  return { data, stats, loading, error };
 }
+

@@ -1,18 +1,30 @@
 import { apiClient } from "./api";
 
+export interface AIRequirementItem {
+  requirement: string;
+  status: "PASS" | "FAIL";
+  reason: string;
+}
+
 export interface AIReportType {
-  projectSummary: string;
-  completionPercentage: number;
-  qualityScore: number;
-  riskLevel: string;
-  missingRequirements: string[];
-  fraudIndicators: string[];
-  suggestions: string[];
+  status?: "PASS" | "NEEDS_REVISION" | "FAIL";
+  score?: number;
+  summary?: string;
+  requirements?: AIRequirementItem[];
+  missingRequirements?: string[];
+  suggestions?: string[];
+  
+  // Legacy / fallback fields
+  projectSummary?: string;
+  completionPercentage?: number;
+  qualityScore?: number;
+  riskLevel?: string;
+  fraudIndicators?: string[];
 }
 
 export interface AnalyzeSubmissionResponse {
   success: boolean;
-  data: AIReportType;
+  data: AIReportType & { submission?: any };
   timestamp: string;
 }
 

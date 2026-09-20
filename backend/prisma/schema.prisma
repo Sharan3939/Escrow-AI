@@ -32,6 +32,34 @@ enum EscrowStatus {
   DISPUTED
 }
 
+enum MilestoneStatus {
+  PENDING
+  FUNDED
+  IN_PROGRESS
+  SUBMITTED
+  AI_REVIEW
+  CLIENT_REVIEW
+  REVISION_REQUESTED
+  DISPUTED
+  APPROVED
+  RELEASED
+  FAILED
+}
+
+enum ClientReviewStatus {
+  PENDING
+  APPROVED
+  REVISION_REQUESTED
+  DISPUTED
+}
+
+enum AiVerificationStatus {
+  PENDING
+  PASS
+  FAIL
+  NEEDS_REVISION
+}
+
 enum SubmissionStatus {
   DRAFT
   SUBMITTED
@@ -67,9 +95,12 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  clientProjects       Project[]       @relation("ClientProjects")
-  freelancerProjects   Project[]       @relation("FreelancerProjects")
+  clientProjects       Project[]            @relation("ClientProjects")
+  freelancerProjects   Project[]            @relation("FreelancerProjects")
   submissions          Submission[]
+  freelancerProfile    FreelancerProfile?
+  givenReviews         FreelancerReview[]   @relation("ClientReviews")
+  receivedReviews      FreelancerReview[]   @relation("FreelancerReviews")
 
   @@index([walletAddress])
   @@index([email])
@@ -88,18 +119,49 @@ model Project {
   
   freelancerId  String?
   freelancer    User?         @relation("FreelancerProjects", fields: [freelancerId], references: [id], onDelete: SetNull)
+  freelancerWalletAddress String?
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   escrow        Escrow?
+  milestones    Milestone[]
   submissions   Submission[]
   transactions  Transaction[]
+  review        FreelancerReview?
 
   @@index([clientId])
   @@index([freelancerId])
   @@index([status])
   @@index([createdAt])
+}
+
+model Milestone {
+  id            String          @id @default(cuid())
+  projectId     String
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String          @db.Text
+  amount        Decimal         @db.Decimal(18, 8)
+  order         Int             @default(1)
+  status        MilestoneStatus @default(PENDING)
+  deadline      DateTime
+  
+  fundedAt      DateTime?
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  releasedAt    DateTime?
+  releaseTxHash String?
+  
+  submissions   Submission[]
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@index([order])
 }
 
 model Escrow {
@@ -125,29 +187,48 @@ model Escrow {
 }
 
 model Submission {
-  id            String            @id @default(cuid())
-  projectId     String
-  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id                    String                @id @default(cuid())
+  projectId             String
+  project               Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
-  freelancerId  String
-  freelancer    User              @relation(fields: [freelancerId], references: [id], onDelete: Cascade)
+  milestoneId           String?
+  milestone             Milestone?            @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
+  freelancerId          String
+  freelancer            User                  @relation(fields: [freelancerId], references: [id], onDelete: Cascade)
   
-  status        SubmissionStatus  @default(DRAFT)
-  description   String            @db.Text
-  githubUrl     String?
-  fileUrl       String?
+  status                SubmissionStatus      @default(DRAFT)
+  description           String                @db.Text
+  githubUrl             String?
+  fileUrl               String?
   
-  aiScore       Int?
-  aiReport      String?           @db.Text
-  aiAnalyzedAt  DateTime?
-  aiStatus      String?
+  // AI Verification Fields
+  aiVerificationStatus  AiVerificationStatus  @default(PENDING)
+  aiScore               Int?
+  aiFeedback            String?               @db.Text
+  aiReport              String?               @db.Text
+  aiAnalyzedAt          DateTime?
+  aiStatus              String?               // legacy support
+
+  // Client Review Fields
+  clientReviewStatus    ClientReviewStatus    @default(PENDING)
+  clientFeedback        String?               @db.Text
+  clientReviewedAt      DateTime?
+  clientReviewedBy      String?
+
+  // Revision Tracking
+  revisionCount         Int                   @default(0)
+  maxRevisions          Int                   @default(3)
   
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   @@index([projectId])
+  @@index([milestoneId])
   @@index([freelancerId])
   @@index([status])
+  @@index([clientReviewStatus])
+  @@index([aiVerificationStatus])
 }
 
 model Transaction {
@@ -175,4 +256,46 @@ model Transaction {
   @@index([txHash])
   @@index([status])
   @@index([createdAt])
+}
+
+model FreelancerProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  totalProjects      Int       @default(0)
+  completedProjects  Int       @default(0)
+  successfulProjects Int       @default(0)
+  disputedProjects   Int       @default(0)
+  totalRevisions     Int       @default(0)
+  totalAdaEarned     Decimal   @default(0) @db.Decimal(18, 8)
+  averageRating      Decimal   @default(0) @db.Decimal(3, 2)
+  ratingCount        Int       @default(0)
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model FreelancerReview {
+  id                 String    @id @default(cuid())
+  projectId          String    @unique
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  freelancerUserId   String
+  freelancer         User      @relation("FreelancerReviews", fields: [freelancerUserId], references: [id], onDelete: Cascade)
+  
+  clientUserId       String
+  client             User      @relation("ClientReviews", fields: [clientUserId], references: [id], onDelete: Cascade)
+  
+  rating             Int
+  comment            String?   @db.Text
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([freelancerUserId])
+  @@index([clientUserId])
+  @@index([projectId])
 }

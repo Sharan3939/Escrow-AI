@@ -69,3 +69,35 @@ export async function getUserById(id: string) {
 
   return user;
 }
+
+export async function updateUserRole(userId: string, role: "CLIENT" | "FREELANCER") {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+    select: {
+      id: true,
+      walletAddress: true,
+      username: true,
+      email: true,
+      role: true,
+      updatedAt: true,
+    },
+  });
+
+  return user;
+}
+
+export async function getFreelancers() {
+  return prisma.user.findMany({
+    where: { role: "FREELANCER" },
+    select: {
+      id: true,
+      walletAddress: true,
+      username: true,
+      bio: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+

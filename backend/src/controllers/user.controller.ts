@@ -40,3 +40,35 @@ export async function getUser(req: Request, res: Response) {
     timestamp: new Date().toISOString(),
   } satisfies APIResponse);
 }
+
+export async function updateUserRole(req: Request, res: Response) {
+  const { role } = req.body;
+  if (role !== "CLIENT" && role !== "FREELANCER") {
+    res.status(400).json({ success: false, message: "Invalid role. Must be CLIENT or FREELANCER" });
+    return;
+  }
+
+  const updatedUser = await userService.updateUserRole(req.userId!, role);
+  const token = generateToken({
+    userId: updatedUser.id,
+    walletAddress: updatedUser.walletAddress,
+    role: updatedUser.role,
+  });
+
+  res.json({
+    success: true,
+    data: { user: updatedUser, token },
+    timestamp: new Date().toISOString(),
+  } satisfies APIResponse);
+}
+
+export async function getFreelancers(_req: Request, res: Response) {
+  const freelancers = await userService.getFreelancers();
+
+  res.json({
+    success: true,
+    data: freelancers,
+    timestamp: new Date().toISOString(),
+  } satisfies APIResponse);
+}
+
